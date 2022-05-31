@@ -1,0 +1,63 @@
+version: '3.7'
+
+services:
+  app:
+    build: .
+    expose: 
+      - 80
+    ports:
+      - 8080:80
+    restart: unless-stopped
+    container_name: app
+    tty: true
+    working_dir: /var/www
+    networks:
+        - app-network
+    volumes:
+      - ./:/var/www
+      - ./.docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+
+    depends_on:
+      - pgdb
+      - mariadb
+
+  pgdb:
+    image: postgres
+    restart: always
+    container_name: pgdb
+    volumes:
+      - "../var/cache/docker:/var/lib/postgresql"
+    environment:
+      - POSTGRES_DB=wisnu
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=wisnu
+      - POSTGRES_PASSWORD=wisnu
+
+    expose:
+      - 5432
+    ports:
+      - "6543:5432"
+    networks:
+      - app-network
+
+  mariadb:
+    image: mariadb
+    container_name: mariadb
+    volumes:
+      - "./storage/app/public/mariadb:/var/lib/mysql"
+    restart: always
+
+    expose: 
+      - 3306
+    ports:
+      - "6544:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ""
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
+      MYSQL_DATABASE: mysql
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
